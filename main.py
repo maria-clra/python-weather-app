@@ -14,7 +14,6 @@ api_key = os.getenv("WEATHER_API_KEY")
 
 app = Flask(__name__)
 
-
 # Display home page and get city name entered into search form
 @app.route("/", methods=["GET", "POST"])
 def home():
@@ -23,6 +22,29 @@ def home():
         return redirect(url_for("get_weather", city=city))
     return render_template("index.html")
 
+def get_estacao(lat):
+    hoje = datetime.date.today()
+    mes = hoje.month
+    dia = hoje.day
+
+    if lat >= 0:  
+        if (mes == 12 and dia >= 21) or (mes <= 3 and dia < 20):
+            return "Winter"
+        elif (mes == 3 and dia >= 20) or (mes < 6):
+            return "Spring"
+        elif (mes == 6 and dia >= 21) or (mes < 9):
+            return "Summer"
+        else:
+            return "Fall"
+    else:  
+        if (mes == 12 and dia >= 21) or (mes <= 3 and dia < 20):
+            return "Summer"
+        elif (mes == 3 and dia >= 20) or (mes < 6):
+            return "Fall"
+        elif (mes == 6 and dia >= 21) or (mes < 9):
+            return "Winter"
+        else:
+            return "Spring"
 
 # Display weather forecast for specific city using data from OpenWeather API
 @app.route("/<city>", methods=["GET", "POST"])
@@ -41,14 +63,13 @@ def get_weather(city):
 
     location_response = requests.get(GEOCODING_API_ENDPOINT, params=location_params)
     location_data = location_response.json()
-
-    # Prevent IndexError if user entered a city name with no coordinates by redirecting to error page
     if not location_data:
         return redirect(url_for("error"))
     else:
         lat = location_data[0]['lat']
         lon = location_data[0]['lon']
 
+    estacao_atual = get_estacao(lat)
     # Get OpenWeather API data
     weather_params = {
         "lat": lat,
@@ -81,10 +102,12 @@ def get_weather(city):
                             today + datetime.timedelta(days=3), today + datetime.timedelta(days=4)]
     five_day_dates_list = [date.strftime("%a") for date in five_day_unformatted]
 
-    return render_template("city.html", city_name=city_name, current_date=current_date, current_temp=current_temp,
-                           current_weather=current_weather, min_temp=min_temp, max_temp=max_temp, wind_speed=wind_speed,
-                           five_day_temp_list=five_day_temp_list, five_day_weather_list=five_day_weather_list,
-                           five_day_dates_list=five_day_dates_list)
+    return render_template("city.html", city_name=city_name, current_date=current_date,
+                       current_temp=current_temp, current_weather=current_weather,
+                       min_temp=min_temp, max_temp=max_temp, wind_speed=wind_speed,
+                       five_day_temp_list=five_day_temp_list, five_day_weather_list=five_day_weather_list,
+                       five_day_dates_list=five_day_dates_list,
+                       estacao_atual=estacao_atual)
 
 
 # Display error page for invalid input
