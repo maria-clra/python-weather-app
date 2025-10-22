@@ -14,6 +14,7 @@ api_key = os.getenv("WEATHER_API_KEY")
 
 app = Flask(__name__)
 
+
 # Display home page and get city name entered into search form
 @app.route("/", methods=["GET", "POST"])
 def home():
